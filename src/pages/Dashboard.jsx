@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
 
-let navigate = useNavigate();
+let navigate = useNavigate()
 
 const [loading, setLoading]=useState();
   useEffect(()=>{
