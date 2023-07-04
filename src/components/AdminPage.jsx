@@ -3,27 +3,17 @@ import styled from 'styled-components'
 import { PuffLoader } from 'react-spinners';
 import Cinema from '../assets/Cinema3.jpg'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faVideoSlash, faUser, faSignOutAlt, faEdit, faCog, faUsers} from "@fortawesome/free-solid-svg-icons";
+import { faVideoSlash} from "@fortawesome/free-solid-svg-icons";
 import Typed from 'react-typed'
-import { Link } from 'react-router-dom';
-import { Email } from '@mui/icons-material';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const fields = [
-  {
-    label: 'Username:',
-    name: 'email',
-    type: 'text',
-    placeholder: 'Enter your email',
-  },
-  {
-    label: 'Password:',
-    name: 'password',
-    type: 'password',
-    placeholder: 'Enter your password',
-  }
-]
+
+
 
 function AdminPage() {
+
   const [loading, setLoading]=useState();
 
   useEffect(()=>{
@@ -31,7 +21,86 @@ function AdminPage() {
     setTimeout(()=>{
       setLoading(false)
     }, 3000)
-  }, [])
+  }, []);
+
+  const [user, setUser] = useState(false);
+
+  const handleClick = ()=>{
+    setUser(true);
+  };
+
+  const handleLeave = ()=>{
+    setUser(false);
+  };
+
+  const [fullname, setFullname] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const navigate = useNavigate();
+
+    const handleLogin = async(event)=>{
+      event.preventDefault()
+      let data = {
+        email: email,
+        password: password
+      };
+      let result = await fetch('http://localhost:6570/jesste/api/users/login',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      let value = await result.json(); 
+
+    if(email || password){
+        if(value.success){
+          localStorage.setItem('token', value.token)
+          toast.success('Login successful')
+          navigate('/dash', {email})
+        }
+        else{
+          toast.error("Invalid email or password")
+        }
+      }
+      else{
+        toast.error("Email or password must be provided")
+        return false;
+      }
+    }
+
+    const handleSignup = async (event) => {
+      event.preventDefault();
+  
+      let data = {
+        fullname: fullname,
+        email: email,
+        password: password,
+      };
+      let result = await fetch('http://localhost:6570/jesste/api/users/register',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      let value = await result.json();
+      console.warn(value);
+      if(fullname|| email|| password)
+      {
+        if(value.success){
+          toast.success('Signup successful!');
+        }else{
+          toast.error(value.message);
+        }
+      }
+      else{
+        toast.error('Please fill all fields');
+        return false;
+      }
+    }
+
   return (
     <Container>
       {
@@ -62,18 +131,53 @@ function AdminPage() {
               <div className='main-login'>
                 <div className='login-form'>
                     <h1>Login</h1>
-                    <form action="">
-                      {
-                        fields.map((each, index)=>(
-                          <div className='field' key={index}>
-                            <label className='label'>{each.label}</label>
+                    <form onClick={handleLogin}>
+                    
+                          <div className='field'>
+                            <label>Email:</label>
                             <br />
-                            <input type={each.type} placeholder={each.placeholder} name={each.name} className='input'/>
+                            <input type='email' name='Email' id='username' placeholder='Enter username' value={email} onChange={(e)=>setEmail(e.target.value)}/>
+                            <br />
+                            <label>Password:</label>
+                            <br />
+                            <input type='password' name='Password' id='password' placeholder='Enter password' value={password} onChange={(e)=>setPassword(e.target.value)}/>
                           </div>
-                        ))
-                      }
-                      <button className='login-button'>Login</button>
+                          <button className='login-button'>Login</button>
                     </form>
+
+                    <div className='extra'>
+                        <p>New to RendShow? <span onClick={handleClick}>Register Now</span></p>
+                    </div>
+                    <div className='sign'>
+                    {
+                      user && (
+                        <div className='sign-form'>
+                          <h1>Sign Up</h1>
+                          <form onClick={handleSignup}>
+                            <div className='field'>
+                              <label>Fullname:</label>
+                              <br />
+                              <input type='text' name='Fullname' id='fullname' placeholder='Enter fullname' value={fullname} onChange={(e)=>setFullname(e.target.value)}/>
+                              <br />
+                              <label>Email:</label>
+                              <br />
+                              <input type='email' name='Email' id='username' placeholder='Enter username' value={email} onChange={(e)=>setEmail(e.target.value)}/>
+                              <br />
+                              <label>Password:</label>
+                              <br />
+                              <input type='password' name='Password' id='password' placeholder='Enter password' value={password} onChange={(e)=>setPassword(e.target.value)}/>
+                            </div>
+                            <button className='login-button'>Sign Up</button>
+                          </form>
+                          <div className='extra'>
+                          <p>New to RendShow? <span onClick={handleLeave}>Sign In Now</span></p>
+                          </div>
+                        </div>
+                      )
+                    }
+                    </div>
+                    
+                    
                 </div>
               </div>
             </main>
@@ -136,7 +240,7 @@ main{
   padding-left: 15%;
 }
 .login-form{
-  background-color: rgba(255, 255, 255, 0.448);
+  background-color: white;
   width: 70%;
   height: 70vh;
   border-radius: 10px;
@@ -147,25 +251,27 @@ main{
   text-decoration: underline;
   font-family: sans-serif;
   font-weight: 700;
-  color: #FFE6C8;
+  color: #FFD39F;
 }
 form{
-  padding: 5% 8%;
+  padding: 3% 8%;
 }
 .field{
-  padding: 2% 0%;
+  padding: 1% 0%;
 }
-.label{
+label{
   font-size: 17px;
-  pading: 5% 0%;
-  color: white;
+  padding: 2% 0%;
+  color: grey;
 }
-.input{
+input{
   width: 400px;
   height: 50px;
   padding-left: 2%;
-  border: 2px solid grey;
+  padding-bottom: 2%;
+  border: 3px solid rgba(128, 128, 128, 0.271);
   border-radius: 10px;
+  outline: none;
 }
 .login-button{
   width: 400px;
@@ -174,6 +280,25 @@ form{
   border-radius: 10px;
   background-color: #FFD39F;
   font-family: sans-serif;
+}
+.extra{
+  color: grey;
+  text-align: center;
+}
+span{
+  color: #FFD39F;
+  cursor: pointer;
+}
+.sign-form{
+  position: absolute;
+  top: 0;
+  display flex;
+  margin-top: 6%;
+  background-color: white;
+  width: 31.5%;
+  height: 70vh;
+  border-radius: 10px;
+  padding-top: 1%;
 }
 `
 export default AdminPage
